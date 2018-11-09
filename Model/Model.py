@@ -6,7 +6,16 @@ import numpy as np
 from PIL import Image
 
 from Utility import get_nb_files, get_data, plot_training, resize_image, plot_preds
+from keras.models import Model, load_model
 
+FC_SIZE = 1024
+NB_VGG_LAYERS_TO_FREEZE = 20
+IM_WIDTH, IM_HEIGHT = 256, 256
+
+def setup_to_transfer_learn(model, base_model):
+    for layer in base_model.layers:
+        layer.trainable = False
+    model.compile(optimizer=adam(), loss='binary_crossentropy', metrics=['accuracy'])
 
 if __name__ == "__main__":
 
