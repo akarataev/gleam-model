@@ -212,3 +212,22 @@ if __name__ == "__main__":
     a.add_argument("--featurewise_center", default=False)
 
     args = a.parse_args()
+
+    if args.image is not None:
+        model = load_model(filepath=args.ft_model)
+        img = resize_image(Image.open(args.image), (IM_WIDTH, IM_HEIGHT))
+        x = np.expand_dims(image.img_to_array(img), axis=0)
+        # x = preprocess_input(x)
+        preds = model.predict(x)
+        plot_preds(Image.open(args.image), preds[0])
+        sys.exit(1)
+
+    if args.train_dir is None or args.val_dir is None:
+        a.print_help()
+        sys.exit(1)
+
+    if (not os.path.exists(args.train_dir)) or (not os.path.exists(args.val_dir)):
+        print("directories do not exist")
+        sys.exit(1)
+
+    train(args)
