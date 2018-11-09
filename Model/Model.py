@@ -7,6 +7,7 @@ from PIL import Image
 
 from Utility import get_nb_files, get_data, plot_training, resize_image, plot_preds
 from keras.models import Model, load_model
+from keras.layers import Dense, GlobalAveragePooling2D, BatchNormalization
 
 FC_SIZE = 1024
 NB_VGG_LAYERS_TO_FREEZE = 20
@@ -16,6 +17,16 @@ def setup_to_transfer_learn(model, base_model):
     for layer in base_model.layers:
         layer.trainable = False
     model.compile(optimizer=adam(), loss='binary_crossentropy', metrics=['accuracy'])
+
+
+def add_new_last_layer(base_model, nb_classes):
+    x = base_model.output
+    x = BatchNormalization()(x)
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(FC_SIZE, activation='relu', kernel_initializer='he_normal')(x)
+    predictions = Dense(nb_classes, activation='softmax')(x)
+    model = Model(inputs=base_model.input, outputs=predictions)
+    return model
 
 if __name__ == "__main__":
 
