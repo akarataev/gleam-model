@@ -28,6 +28,13 @@ def add_new_last_layer(base_model, nb_classes):
     model = Model(inputs=base_model.input, outputs=predictions)
     return model
 
+def setup_to_finetune(model):
+    for layer in model.layers[:NB_VGG_LAYERS_TO_FREEZE]:
+        layer.trainable = False
+    for layer in model.layers[NB_VGG_LAYERS_TO_FREEZE:]:
+        layer.trainable = True
+    model.compile(optimizer=sgd(lr=1e-5, momentum=0.9), loss='binary_crossentropy', metrics=['accuracy'])
+
 if __name__ == "__main__":
 
     a = argparse.ArgumentParser()
