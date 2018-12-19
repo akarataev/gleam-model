@@ -6,13 +6,28 @@ from keras.preprocessing.image import load_img, img_to_array
 
 
 def get_data(DIR_PATH, tar_size):
-    data = []
+    x_data = []
+    y_data = []
+
+    class_to_index = {
+        name: index for index, name in
+        enumerate(os.listdir(DIR_PATH))
+    }
+
     for p_dir in os.listdir(DIR_PATH):
+
+        y_vec = np.array(
+            [0 if i != class_to_index[p_dir] else 1
+             for i in range(len(class_to_index))]
+        )
+
         for f in os.listdir(os.path.join(DIR_PATH, p_dir)):
             img = load_img(os.path.join(DIR_PATH, p_dir, f), target_size=tar_size)
             img_arr = img_to_array(img)
-            data.append(img_arr)
-    return np.array(data)
+            x_data.append(img_arr)
+            y_data.append(y_vec)
+
+    return np.array(x_data), np.array(y_data)
 
 
 def get_nb_files(directory):
@@ -51,7 +66,16 @@ def plot_training(history, file):
     plt.savefig("Models/Plots/vl_" + file)
 
 
-
+def plot_auc_roc(tpr, fpr, auc, name):
+    plt.figure()
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.plot(fpr, tpr, label=name+' (area = {:.3f})'.format(auc))
+    plt.xlabel('False positive rate')
+    plt.ylabel('True positive rate')
+    plt.title('AUC/ROC curve')
+    plt.legend(loc='best')
+    plt.savefig('Models/Plots/' + name + '.png')
+    plt.show()
 
 def plot_preds(image, preds):
   plt.imshow(image)
