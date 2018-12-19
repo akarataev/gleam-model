@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 from PIL import Image
 
-from Utility import get_nb_files, get_data, plot_training, resize_image, plot_preds
+from Utility import *
 
 from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.models import Model, load_model
@@ -14,6 +14,8 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import adam, sgd
 from keras.callbacks import ModelCheckpoint
 from keras.preprocessing import image
+
+from sklearn.metrics import roc_curve, auc
 
 FC_SIZE = 1024
 NB_VGG_LAYERS_TO_FREEZE = 20
@@ -65,7 +67,7 @@ def train(args):
     # MARK :- fit train data generator for featurewise_center
 
     if args.featurewise_center:
-        train_x = get_data(args.train_dir, tar_size=(IM_WIDTH, IM_HEIGHT, 3))
+        train_x, _ = get_data(args.train_dir, tar_size=(IM_WIDTH, IM_HEIGHT, 3))
         train_datagen.fit(train_x / 225)
 
 
@@ -86,7 +88,7 @@ def train(args):
     # MARK :- fit valid data generator for featurewise_center
 
     if args.featurewise_center:
-        valid_x = get_data(args.val_dir, tar_size=(IM_WIDTH, IM_HEIGHT, 3))
+        valid_x, _ = get_data(args.val_dir, tar_size=(IM_WIDTH, IM_HEIGHT, 3))
         valid_datagen.fit(valid_x / 225)
 
 
@@ -200,8 +202,9 @@ if __name__ == "__main__":
 
     a = argparse.ArgumentParser()
 
-    a.add_argument("--train_dir", default='Dataset/Train')
-    a.add_argument("--val_dir", default='Dataset/Validation')
+    a.add_argument("--train_dir", default="Dataset/Train")
+    a.add_argument("--val_dir", default="Dataset/Validation")
+    a.add_argument("--test_dir", default="Dataset/Test")
     a.add_argument("--tl_epoch", default=15)
     a.add_argument("--ft_epoch", default=5)
     a.add_argument("--batch_size", default=30)
@@ -210,6 +213,7 @@ if __name__ == "__main__":
     a.add_argument("--ft_model", default="Models/ft_vl_vgg16.h5")
     a.add_argument("--tl_model", default="Models/tl_vl_vgg16.h5")
     a.add_argument("--featurewise_center", default=False)
+    a.add_argument("--plot_roc_auc", default=False)
 
     args = a.parse_args()
 
@@ -220,6 +224,15 @@ if __name__ == "__main__":
         # x = preprocess_input(x)
         preds = model.predict(x)
         plot_preds(Image.open(args.image), preds[0])
+        sys.exit(1)
+
+    if args.plot_roc_auc:
+        model = load_model(filepath=args.ft_model)
+        test_x, test_y = get_data(args.val_dir, tar_size=(IM_WIDTH, IM_HEIGHT, 3))
+        pred_test_y = model.predict(test_x).ravel()
+        fpr, tpr, thresholds = roc_curve(test_y.ravel(), pred_test_y)
+        auc_score = auc(fpr, tpr)
+        plot_auc_roc(tpr, fpr, auc_score, "auc_roc_ft_vgg16")
         sys.exit(1)
 
     if args.train_dir is None or args.val_dir is None:
