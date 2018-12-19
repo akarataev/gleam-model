@@ -30,6 +30,12 @@ The following preprocessing tasks are developed for each image:
 
 ## Final result
 
+#### AUC/ROC curve chart
+
+###### For transfer learning model:
+
+<img src="Models/Plots/auc_roc_ft_vgg16.png">
+
 
 #### Training and validation loss VGG16
 
